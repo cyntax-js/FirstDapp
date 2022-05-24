@@ -1,28 +1,31 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^ 0.8.4;
+pragma solidity ^0.8.4;
 
 
-contract Transactions{
+contract Transaction{
+
+event TransferEthereum(address from, address receiver, uint amount,  uint256 timestamp, string message);
+
+struct TransferEthereumStruct{
 
 
-event TransferEth(address from, address receiver, uint amount,uint256 timestamp,string message);
-
-struct TransferEthStruct{
-address from;
-address receiver;
-uint amount;
-uint256 timestamp;
-string message;
+    address from;
+    address receiver;
+    uint amount;
+    uint256 timestamp;
+    string message;
 }
-TransferEthStruct[] transactions;
+TransferEthereumStruct[] transactions;
 
-function AddToBlockChain  (address payable receiver, uint amount, string memory message) public{
 
-transactions.push(TransferEthStruct(msg.sender, receiver, amount, block.timestamp,message));
+function addToBlockChain(address payable receiver, uint amount,string memory message) public{
 
-emit TransferEth(msg.sender, receiver, amount, block.timestamp,message);
+transactions.push (TransferEthereumStruct(msg.sender, receiver, amount, block.timestamp, message));
+emit TransferEthereum(msg.sender, receiver, amount, block.timestamp, message);
 
 }
+
+
 
 }
