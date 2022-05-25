@@ -6,23 +6,30 @@ const { ethereum } = window;
 
 const createEthereumContract = () => {
   const provider = new ethers.providers.Web3Provider(ethereum);
-  // new ethers.providers.Web3Provider();
   const signer = provider.getSigner();
-  const transactionContract = {
-    contractAbi,
+  const transactionsContract = new ethers.Contract(
     contractAddress,
-    signer,
-  };
+    contractAbi,
+    signer
+  );
 
-  console.log(transactionContract);
-
-  //   return transactionContract;
+  return transactionsContract; //   return transactionsContract;
 };
 
 export const TransactionProvider = ({ children }) => {
   const [account, setAccount] = useState("");
-
+  const [formData, setFormData] = useState({
+    addressTo: "",
+    amount: "",
+    message: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const [ethBalance, setEthBalance] = useState("0");
+
+  const handleChange = (e, name) => {
+    setFormData((prevState) => ({ ...prevState, [name]: e.target.value }));
+  };
+
   const checkIfWalletConnect = async () => {
     try {
       if (!ethereum) return alert("Please install MetaMask.");
@@ -39,7 +46,6 @@ export const TransactionProvider = ({ children }) => {
   const getWalletBalance = async () => {
     try {
       if (!ethereum) return alert("Please install MetaMask.");
-
       const accounts = await ethereum.request({ method: "eth_accounts" });
 
       const CurrentAccount = accounts[0];
@@ -51,7 +57,43 @@ export const TransactionProvider = ({ children }) => {
 
       const wei = parseInt(balance, 16);
       const eth = wei / Math.pow(10, 18);
-      setEthBalance(eth.toFixed(4));
+      setEthBalance(eth.toFixed(3));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const sendTransaction = async () => {
+    try {
+      if (!ethereum) return alert("Please install MetaMask.");
+      const { addressTo, amount, message } = formData;
+      const transactionsContract = createEthereumContract();
+      const parsedAmount = ethers.utils.parseEther(amount);
+
+      await ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: account,
+            to: addressTo,
+            gas: "0x5208",
+            value: parsedAmount._hex,
+          },
+        ],
+      });
+
+      const transactionHash = await transactionsContract.addToBlockChain(
+        addressTo,
+        parsedAmount,
+        message
+      );
+
+      setIsLoading(true);
+      console.log(`Loading - ${transactionHash.hash}`);
+      await transactionHash.wait();
+      console.log(`Success - ${transactionHash.hash}`);
+      setIsLoading(false);
+      window.location.reload();
     } catch (error) {
       console.log(error);
     }
@@ -76,10 +118,20 @@ export const TransactionProvider = ({ children }) => {
   useEffect(() => {
     checkIfWalletConnect();
     getWalletBalance();
-  }, [getWalletBalance]);
+  });
 
   return (
-    <TransactionContext.Provider value={{ account, ConnectWallet, ethBalance }}>
+    <TransactionContext.Provider
+      value={{
+        account,
+        ConnectWallet,
+        ethBalance,
+        formData,
+        sendTransaction,
+        handleChange,
+        isLoading,
+      }}
+    >
       {children}
     </TransactionContext.Provider>
   );

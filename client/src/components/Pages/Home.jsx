@@ -3,7 +3,7 @@ import { AiFillPlayCircle } from "react-icons/ai";
 import { SiEthereum } from "react-icons/si";
 import { BsInfoCircle } from "react-icons/bs";
 import { TransactionContext } from "../../context/TransactionContext";
-
+import Loader from "./Loader";
 const Input = ({ placeholder, name, type, value, handleChange }) => (
   <input
     placeholder={placeholder}
@@ -16,8 +16,25 @@ const Input = ({ placeholder, name, type, value, handleChange }) => (
 );
 
 const Home = () => {
-  const { account, ConnectWallet, ethBalance } = useContext(TransactionContext);
+  const {
+    account,
+    ConnectWallet,
+    ethBalance,
+    formData,
+    sendTransaction,
+    isLoading,
+    handleChange,
+  } = useContext(TransactionContext);
 
+  const handleSubmit = (e) => {
+    const { addressTo, amount, message } = formData;
+
+    e.preventDefault();
+
+    if (!addressTo || !amount || !message) return;
+
+    sendTransaction();
+  };
   console.log(account);
   console.log(ethBalance, "Balance is supposed to be here");
   return (
@@ -49,12 +66,25 @@ const Home = () => {
             </span>
           </div>
           <div className="p-5 sm:w-96 w-full flex flex-col justify-start items-center blue-glassmorphism2">
-            <Input placeholder="Your Address" name="addressTo" type="text" />
-            <Input placeholder="amount (ETH)" name="amount" type="number" />
-            <Input placeholder="Enter Message" name="message" type="text" />
-
+            <Input
+              placeholder="Your Address"
+              name="addressTo"
+              type="text"
+              handleChange={handleChange}
+            />
+            <Input
+              placeholder="amount (ETH)"
+              name="amount"
+              type="number"
+              handleChange={handleChange}
+            />
+            <Input
+              placeholder="Enter Message"
+              name="message"
+              type="text"
+              handleChange={handleChange}
+            />
             <div className="h-[1px] w-full bg-gray-400 my-2" />
-
             {account === "" ? (
               <button
                 type="button"
@@ -69,9 +99,12 @@ const Home = () => {
               >
                 Connect Wallet <AiFillPlayCircle className="text-white mr-2" />
               </button>
+            ) : isLoading === true ? (
+              <Loader />
             ) : (
               <button
                 type="button"
+                onClick={handleSubmit}
                 className="text-white w-full mt-2 border-[1px] p-2 border-[#3d4f7c] hover:bg-[#3d4f7c] rounded-full cursor-pointer"
                 style={{
                   display: "flex",
@@ -80,7 +113,7 @@ const Home = () => {
                   gap: "10px",
                 }}
               >
-                Receive <SiEthereum />
+                Send <SiEthereum />
               </button>
             )}
           </div>
